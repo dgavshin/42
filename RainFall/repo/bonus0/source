@@ -1,0 +1,30 @@
+char read_to_arr(char *dest, char *s)
+{
+  char buf[4104];
+
+  puts(s);
+  read(0, buf, 4096);
+  *strchr(buf, 10) = 0;
+  return strncpy(dest, buf, 0x14u);
+}
+
+char pp(char *dest)
+{
+  char src[20];
+  char v3[28];
+
+  p(src, " - ");
+  p(v3, " - ");
+  strcpy(dest, src);
+  dest[strlen(dest)] = '\x20';
+  return strcat(dest, v3);
+}
+
+int  main(int argc, const char **argv)
+{
+  char s[42];
+
+  pp(s);
+  puts(s);
+  return 0;
+}

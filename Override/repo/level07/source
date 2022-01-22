@@ -1,0 +1,117 @@
+#include <stdio.h>
+#include <string.h>
+
+int store_number(char *buffer)
+{
+  int result;
+  unsigned int input_number;
+  unsigned int index;
+
+  printf(" Number: ");
+  input_number = get_unum();
+  printf(" Index: ");
+  index = get_unum();
+  if (!(index % 3) || input_number >> 0x18 != 0xb7) {
+    puts(" *** ERROR! ***");
+    puts("   This index is reserved for wil!");
+    puts(" *** ERROR! ***");
+    result = 1;
+  }
+  else
+  {
+    buffer[4 * index] = input_number;// ❌ переполнение инта
+    result = 0;
+  }
+  return result;
+}
+
+int read_number(char *buffer)
+{
+  int index;
+
+  printf(" Index: ");
+  index = get_unum();
+  printf(" Number at data[%u] is %u\n", index, buffer[4 * index]);
+  return 0;
+}
+
+int get_unum()
+{
+  int num;
+
+  num = 0;
+  fflush(stdout);
+  scanf("%u", &num);
+  clear_stdin();
+  return num;
+}
+
+int clear_stdin()
+{
+  int result; // eax
+
+  do
+    result = getchar();
+  while ( result != 10 && result != 0xFF );
+  return result;
+}
+
+int main(int argc, const char **argv, const char **envp)
+{
+  char buffer[400];
+  int is_failed;
+  char command[20];
+  unsigned int canary;
+
+  canary = __readgsdword(0x14u);
+  is_failed = 0;
+  memset(command, 0, sizeof(command));
+  memset(buffer, 0, sizeof(buffer));
+  while ( *argv )
+  {
+    memset((void *)*argv, 0, strlen(*argv));
+    ++argv;
+  }
+  while ( *envp )
+  {
+    memset((void *)*envp, 0, strlen(*envp));
+    ++envp;
+  }
+  puts(
+    "----------------------------------------------------\n"
+    "  Welcome to wil's crappy number storage service!   \n"
+    "----------------------------------------------------\n"
+    " Commands:                                          \n"
+    "    store - store a number into the data storage    \n"
+    "    read  - read a number from the data storage     \n"
+    "    quit  - exit the program                        \n"
+    "----------------------------------------------------\n"
+    "   wil has reserved some storage :>                 \n"
+    "----------------------------------------------------\n");
+  while ( 1 )
+  {
+    printf("Input command: ");
+    is_failed = 1;
+    fgets(command, 20, stdin);
+    command[strlen(command) - 1] = 0;
+    if ( !memcmp(command, "store", 5u) )
+    {
+      is_failed = store_number(buffer);
+      goto PRINT_RESULT;
+    }
+    if ( !memcmp(command, "read", 4u) )
+    {
+      is_failed = read_number(buffer);
+      goto PRINT_RESULT;
+    }
+    if ( !memcmp(command, "quit", 4u) )
+      return 0;
+
+PRINT_RESULT:
+    if ( is_failed )
+      printf(" Failed to do %s command\n", command);// ✔
+    else
+      printf(" Completed %s command successfully\n", command);// ✔
+    memset(command, 0, sizeof(command));
+  }
+}

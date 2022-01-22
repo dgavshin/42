@@ -1,0 +1,22 @@
+int m = 0;
+
+int v()
+{
+  int result;
+  char s[520];
+
+  fgets(s, 512, stdin);
+  printf(s);
+  result = m;
+  if ( m == 64 )
+  {
+    fwrite("Wait what?!\n", 1u, 0xCu, stdout);
+    result = system("/bin/sh");
+  }
+  return result;
+}
+
+int main(int argc, const char **argv)
+{
+  return v();
+}

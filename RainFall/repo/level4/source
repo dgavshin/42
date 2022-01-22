@@ -1,0 +1,19 @@
+int m = 0;
+
+int n()
+{
+  int result;
+  char s[520];
+
+  fgets(s, 512, stdin);
+  p(s);
+  result = m;
+  if ( m == 16930116 )
+    result = system("/bin/cat /home/user/level5/.pass");
+  return result;
+}
+
+int main(int argc, const char **argv)
+{
+  return n();
+}

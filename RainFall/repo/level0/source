@@ -1,0 +1,19 @@
+int  main(int argc, const char **argv)
+{
+  int v5;
+  int v6;
+
+  if ( atoi(argv[1]) == 423 )
+  {
+    v6 = getegid();
+    v5 = geteuid();
+    setresgid(v6, v6, v6);
+    setresuid(v5, v5, v5);
+    system("/bin/sh\0");
+  }
+  else
+  {
+    fwrite("No !\n", 1, 5, stderr);
+  }
+  return 0;
+}

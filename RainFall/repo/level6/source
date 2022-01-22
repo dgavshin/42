@@ -1,0 +1,21 @@
+int n()
+{
+  return system("/bin/cat /home/user/level7/.pass");
+}
+
+int m()
+{
+  return puts("Nope");
+}
+
+int  main(int argc, const char **argv)
+{
+  int (**v4)(void);
+  char *v5;
+
+  v5 = (char *)malloc(64u);
+  v4 = (int (**)(void))malloc(4u);
+  *v4 = m;
+  strcpy(v5, argv[1]);
+  return (*v4)();
+}
